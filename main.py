@@ -22,12 +22,19 @@ class Cell:
     def isAlive(self):
         return True if self.is_alive else False
 
+    def toggle(self):
+        self.is_alive = not self.is_alive
+
     def update(self):
         if self.is_alive_next_gen:
             self.is_alive = True
-        else: 
+        else:
             self.is_alive = False
         self.is_alive_next_gen = False
+
+class State:
+    def __init__(self):
+        self.run = False
 
 """
 Draws a square on the screen using the global SCREEN object
@@ -59,7 +66,7 @@ def updateCells():
             cell.is_alive_next_gen = False
     # process flag and update the cells
     for cell in cells:
-        cell.update() 
+        cell.update()
 
 
 def countLivingNeighbors(cell, container):
@@ -131,18 +138,22 @@ def getCellAtIndex(pos):
     else:
         return cells[idx]
 
-def test():
-    # resurrect some cells and check if counting alive neighbors works
-    """
-    getCellAtIndex((0, 0)).is_alive = True
-    getCellAtIndex((1, 0)).is_alive = True
-    getCellAtIndex((1, 2)).is_alive = True
-    """
-    getCellAtIndex((1, 1)).is_alive = True
-    getCellAtIndex((1, 2)).is_alive = True
-    getCellAtIndex((1, 3)).is_alive = True
-    print(countLivingNeighbors(getCellAtIndex((0,1)), cells))
-    
+def getCellFromMousePosition(pos):
+    cellPos = (pos[0] // 32, pos[1] // 32)
+    cell = getCellAtIndex(cellPos)
+    if cell:
+        cell.toggle()
+
+def handleInput():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            print(event)
+            sys.exit()
+        if event.type == pygame.KEYUP:
+            if event.key == 32:
+                state.run = not state.run
+        if event.type == pygame.MOUSEBUTTONUP:
+            getCellFromMousePosition(event.pos)
 
 
 
@@ -158,21 +169,27 @@ CLOCK = pygame.time.Clock()
 
 cells = []
 
+state = State()
+
 COLOR_BLACK = (0, 0, 0)
 COLOR_ALIVE = (0, 120, 0)
 COLOR_DEAD  = (90, 90, 90)
 
 # init cell grid (32 x 32 cells)
 initCells(cells)
-test()
+
+COUNTER = 0
 
 # Game Loop
 while True:
     # User Input
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
+    handleInput()
+
+    # Update Counter
+    COUNTER = (COUNTER + 1) % 60
+
     # FPS
-    CLOCK.tick(1)
+    CLOCK.tick(60)
 
     # Erase the screen
     SCREEN.fill(COLOR_BLACK)
@@ -182,7 +199,8 @@ while True:
         drawCell(cell)
 
     # Update cells for next generation
-    updateCells()
+    if state.run and COUNTER == 0:
+        updateCells()
 
     # Update the visible display
     pygame.display.flip()
