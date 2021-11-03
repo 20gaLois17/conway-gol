@@ -68,19 +68,21 @@ def updateCells():
     for cell in cells:
         cell.update()
 
-
+"""
+Return number of living neighbors for given cell and cell container
+"""
 def countLivingNeighbors(cell, container):
     x = cell.pos[0]
     y = cell.pos[1]
     neighborsPositions = [
-        (x - 1, y - 1), # top left
-        (x - 1, y    ), # left
-        (x - 1, y + 1), # bottom left
-        (x,     y + 1), # bottom
-        (x + 1, y + 1), # bottom right
-        (x + 1, y    ), # right
-        (x + 1, y - 1), # top right
-        (x,     y - 1), # top
+        (x,     y - 1),    # top
+        (x - 1, y    ),    # left
+        (x + 1, y    ),    # right
+        (x,     y + 1),    # bottom
+        (x - 1, y - 1),    # top left
+        (x + 1, y - 1),    # top right
+        (x - 1, y + 1),    # bottom left
+        (x + 1, y + 1),    # bottom right
     ]
 
     neighbors_list = []
@@ -100,7 +102,7 @@ def countLivingNeighbors(cell, container):
     return count
 
 """
-Returns weather the cell will be alive in the next generation
+Returns (bool) weather the cell will be alive in the next generation
 """
 def willBeAlive(cell, container):
     c = countLivingNeighbors(cell, container)
@@ -122,7 +124,6 @@ Returns cell array index based on the cell position on the grid.
 If the index exeeds the bounds of the grid, return negative value
 """
 def getCellsIndex(pos):
-    # return false if not on the grid
     if 0 <= pos[0] <= 31 and 0 <= pos[1] <= 31:
         return pos[1] * 32 + pos[0]
     else:
@@ -131,7 +132,6 @@ def getCellsIndex(pos):
 Return cell reference from cells global by passing the grid position
 """
 def getCellAtIndex(pos):
-    # return cell or void
     idx = getCellsIndex(pos)
     if idx < 0:
         return
@@ -142,18 +142,20 @@ def getCellFromMousePosition(pos):
     cellPos = (pos[0] // 32, pos[1] // 32)
     cell = getCellAtIndex(cellPos)
     if cell:
-        cell.toggle()
+        return cell
 
+"""
+User Input
+"""
 def handleInput():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            print(event)
             sys.exit()
         if event.type == pygame.KEYUP:
             if event.key == 32:
                 state.run = not state.run
         if event.type == pygame.MOUSEBUTTONUP:
-            getCellFromMousePosition(event.pos)
+            getCellFromMousePosition(event.pos).toggle()
 
 
 
@@ -173,7 +175,7 @@ state = State()
 
 COLOR_BLACK = (0, 0, 0)
 COLOR_ALIVE = (0, 120, 0)
-COLOR_DEAD  = (90, 90, 90)
+COLOR_DEAD  = (60, 60, 60)
 
 # init cell grid (32 x 32 cells)
 initCells(cells)
