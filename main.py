@@ -47,37 +47,45 @@ class Cell:
 Contains Cells and Game Logic
 """
 class Grid:
-    rows        = int 
-    columns     = int 
-    cellPadding = int 
-    cells       = []
+    rows          = int
+    columns       = int
+    cellPadding   = int
+    cellBoxWidth  = int
+    cellBoxHeight = int
+    cells         = []
 
     """
-    Initialise 32 x 32 grid
+    Initialise (columns x rows) grid
     """
     def __init__(self, columns, rows, cellPadding):
-        self.rows = rows
-        self.columns = columns
-        self.cellPadding = cellPadding 
-        for colIndex in range(self.columns):
-            for rowIndex in range(self.rows):
+        if not (1 <= columns < 512 and 1 <= rows < 512):
+            return
+
+        self.cells         = []
+        self.columns       = columns
+        self.rows          = rows
+        self.cellPadding   = cellPadding
+        self.cellBoxWidth  = HEIGHT / self.rows
+        self.cellBoxHeight = HEIGHT / self.rows
+
+        # initialise cells
+        for colIndex in range(self.rows):
+            for rowIndex in range(self.columns):
                 self.cells.append(Cell(rowIndex, colIndex))
 
+
     def getCell(self, x, y):
-        print(x, y)
         if 0 <= x < self.columns and 0 <= y < self.rows:
-            return self.cells[y * self.rows + x]
+            return self.cells[y * self.columns + x]
 
     # TODO: Clean this up
     def draw(self):
         for cell in self.cells:
-            cellWidth = WIDTH / self.columns
-            cellHeight = HEIGHT / self.rows
-            cellBoxWidth = cellWidth - self.cellPadding
-            cellBoxHeight = cellHeight - self.cellPadding
-            x = cell.pos[0] * cellWidth
-            y = cell.pos[1] * cellHeight
-            pygame.draw.rect(SCREEN, cell.getColor(), (x, y, cellBoxWidth, cellBoxHeight))
+            cellWidth = self.cellBoxWidth - self.cellPadding
+            cellHeight = self.cellBoxHeight - self.cellPadding
+            x = cell.pos[0] * self.cellBoxWidth
+            y = cell.pos[1] * self.cellBoxHeight
+            pygame.draw.rect(SCREEN, cell.getColor(), (x, y, cellWidth, cellHeight))
 
     def updateCellsForNextGen(self):
         # process flag and update the cells
@@ -133,10 +141,8 @@ class Grid:
         return count
 
     def click(self, pos):
-        x = pos[0] // (WIDTH // self.rows)
-        y = pos[1] // (HEIGHT // self.columns)
-        print(x)
-        print(y)
+        x = int(pos[0] // (WIDTH / self.columns))
+        y = int(pos[1] // (HEIGHT / self.rows))
         cell = grid.getCell(x, y)
         if cell:
             cell.toggle()
@@ -159,8 +165,13 @@ def handleInput():
         if event.type == pygame.KEYUP:
             if event.key == 32:
                 state.run = not state.run
+            if event.key == 45:
+                grid.__init__(grid.columns * 2 , grid.rows * 2, 1)
+            if event.key == 61:
+                grid.__init__(grid.columns // 2, grid.rows // 2, 1)
+
+
         if event.type == pygame.MOUSEBUTTONUP:
-            print(event)
             grid.click(event.pos)
 
 import sys, pygame
@@ -176,7 +187,7 @@ CLOCK  = pygame.time.Clock()
 COLOR_BLACK = (0, 0, 0)
 
 state = State()
-grid  = Grid(8, 16, 2)
+grid  = Grid(32, 32, 1)
 
 COUNTER = 0
 
@@ -198,7 +209,6 @@ while True:
     grid.draw()
 
     # Update cells for next generation every 60 frames
-    
     if state.run and COUNTER == 0:
         grid.prepareCellsForNextGen()
         grid.updateCellsForNextGen()
