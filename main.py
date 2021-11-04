@@ -15,11 +15,11 @@ class Cell:
     color_alive       = (0, 120, 0)
     color_dead        = (60, 60, 60)
 
-    """
-    :param x: column index
-    :param y: row index
-    """
     def __init__(self, x, y):
+        """
+        :param x: column index
+        :param y: row index
+        """
         self.pos = (x, y)
         self.is_alive = False
         self.is_alive_next_gen = False
@@ -46,10 +46,10 @@ class Cell:
             self.is_alive = False
         self.is_alive_next_gen = False
 
-"""
-Contains Cells and Game Logic
-"""
 class Grid:
+    """
+    Contains Cells and Game Logic
+    """
     rows          = int
     columns       = int
     cellPadding   = int
@@ -57,12 +57,12 @@ class Grid:
     cellBoxHeight = float
     cells         = []
 
-    """
-    :param columns: number of grid columns
-    :param rows: number of grid rows
-    :param cellPadding: padding (in px) between cells
-    """
     def __init__(self, columns, rows, cellPadding):
+        """
+        :param columns: number of grid columns
+        :param rows: number of grid rows
+        :param cellPadding: padding (in px) between cells
+        """
         # set sensible boundaries
         if not (4 <= columns < 128 and 4 <= rows < 128):
             print("exceeding sensible grid dimensions")
@@ -81,19 +81,19 @@ class Grid:
                 self.cells.append(Cell(rowIndex, colIndex))
 
 
-    """
-    Returns the cell by column and row index on the grid, if not out of bound
-    :param x: the column index for the cell
-    :param y: the row index for the cell
-    """
     def getCell(self, x, y):
+        """
+        Returns the cell by column and row index on the grid, if not out of bound
+        :param x: the column index for the cell
+        :param y: the row index for the cell
+        """
         if 0 <= x < self.columns and 0 <= y < self.rows:
             return self.cells[y * self.columns + x]
 
-    """
-    Draws all cells to the screen, dead or alive cells will have different colors
-    """
     def draw(self):
+        """
+        Draws all cells to the screen, dead or alive cells will have different colors
+        """
         for cell in self.cells:
             cellWidth = self.cellBoxWidth - self.cellPadding
             cellHeight = self.cellBoxHeight - self.cellPadding
@@ -106,10 +106,10 @@ class Grid:
         for cell in self.cells:
             cell.update()
 
-    """
-    Implement the Rules of Conway's Game of Life
-    """
     def prepareCellsForNextGen(self):
+        """
+        Implement the Rules of Conway's Game of Life
+        """
         for cell in self.cells:
             c = self.countLivingNeighbors(cell)
             if cell.isAlive():
@@ -128,11 +128,11 @@ class Grid:
                 else:
                     cell.is_alive_next_gen = False
 
-    """
-    Find neighbors to given cell on the grid and cound the living ones to
-    be able to decide the cell's fate
-    """
     def countLivingNeighbors(self, cell):
+        """
+        Find neighbors to given cell on the grid and cound the living ones to
+        be able to decide the cell's fate
+        """
         x = cell.pos[0]
         y = cell.pos[1]
 
@@ -157,11 +157,11 @@ class Grid:
 
         return count
 
-    """
-    Handle Click Event
-    :param pos: Position of the Click on the screen
-    """
     def click(self, pos):
+        """
+        Handle Click Event
+        :param pos: Position of the Click on the screen
+        """
         x = int(pos[0] // (WIDTH / self.columns))
         y = int(pos[1] // (HEIGHT / self.rows))
         cell = grid.getCell(x, y)
@@ -180,12 +180,12 @@ class State:
         self.frame = 0
         self.grid = grid
 
-    """
-    Right now the game refreshes at 60 fps.
-    To make the change on the grid over time more readable, we only update
-    the cells once per second (every 60 frames)
-    """
     def nextFrame(self):
+        """
+        Right now the game refreshes at 60 fps.
+        To make the change on the grid over time more readable, we only update
+        the cells once per second (every 60 frames)
+        """
         if not self.run: return
 
         self.frame = (self.frame + 1) % 60
@@ -201,10 +201,10 @@ class State:
         self.run = False
         pygame.display.set_caption("Game of Life -- PAUSED --")
 
-"""
-User Input
-"""
 def handleInput():
+    """
+    User Input
+    """
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
