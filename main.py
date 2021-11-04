@@ -29,7 +29,7 @@ class Cell:
     def toggle(self):
         self.is_alive = not self.is_alive
 
-    def getColor():
+    def getColor(self):
         if self.isAlive():
             return self.color_alive
         else:
