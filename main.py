@@ -15,6 +15,10 @@ class Cell:
     color_alive       = (0, 120, 0)
     color_dead        = (60, 60, 60)
 
+    """
+    :param x: column index
+    :param y: row index
+    """
     def __init__(self, x, y):
         self.pos = (x, y)
         self.is_alive = False
@@ -54,7 +58,9 @@ class Grid:
     cells         = []
 
     """
-    Initialise (columns x rows) grid
+    :param columns: number of grid columns
+    :param rows: number of grid rows
+    :param cellPadding: padding (in px) between cells
     """
     def __init__(self, columns, rows, cellPadding):
         # set sensible boundaries
@@ -75,10 +81,18 @@ class Grid:
                 self.cells.append(Cell(rowIndex, colIndex))
 
 
+    """
+    Returns the cell by column and row index on the grid, if not out of bound
+    :param x: the column index for the cell
+    :param y: the row index for the cell
+    """
     def getCell(self, x, y):
         if 0 <= x < self.columns and 0 <= y < self.rows:
             return self.cells[y * self.columns + x]
 
+    """
+    Draws all cells to the screen, dead or alive cells will have different colors
+    """
     def draw(self):
         for cell in self.cells:
             cellWidth = self.cellBoxWidth - self.cellPadding
@@ -114,7 +128,10 @@ class Grid:
                 else:
                     cell.is_alive_next_gen = False
 
-
+    """
+    Find neighbors to given cell on the grid and cound the living ones to
+    be able to decide the cell's fate
+    """
     def countLivingNeighbors(self, cell):
         x = cell.pos[0]
         y = cell.pos[1]
@@ -133,13 +150,17 @@ class Grid:
         count = 0
         for pos in neighborPositions:
             neighbor = self.getCell(pos[0], pos[1])
-            if neighbor.__class__.__name__ != 'Cell':
+            if neighbor.__class__.__name__ != "Cell":
                 pass
             elif neighbor.isAlive():
                 count += 1
 
         return count
 
+    """
+    Handle Click Event
+    :param pos: Position of the Click on the screen
+    """
     def click(self, pos):
         x = int(pos[0] // (WIDTH / self.columns))
         y = int(pos[1] // (HEIGHT / self.rows))
@@ -159,6 +180,11 @@ class State:
         self.frame = 0
         self.grid = grid
 
+    """
+    Right now the game refreshes at 60 fps.
+    To make the change on the grid over time more readable, we only update
+    the cells once per second (every 60 frames)
+    """
     def nextFrame(self):
         if not self.run: return
 
@@ -174,7 +200,6 @@ class State:
     def stop(self):
         self.run = False
         pygame.display.set_caption("Game of Life -- PAUSED --")
-
 
 """
 User Input
@@ -233,7 +258,6 @@ while True:
     # Draw all the cells
     grid.draw()
 
-    # Update cells for next generation every 60 frames
     state.nextFrame()
 
     # Update the visible display
