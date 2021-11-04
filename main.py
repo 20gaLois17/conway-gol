@@ -10,11 +10,15 @@ Rules:
 
 class Cell:
     pos               = (-1, -1) # position on the grid
-    is_alive          = False
-    is_alive_next_gen = False
+    is_alive          = bool
+    is_alive_next_gen = bool
+    color_alive       = (0, 120, 0)
+    color_dead        = (60, 60, 60)
 
     def __init__(self, x, y):
         self.pos = (x, y)
+        self.is_alive = False
+        self.is_alive_next_gen = False
 
     def __str__(self):
         return "cell at (" + str(self.pos[0]) + "," + str(self.pos[1]) + ")"
@@ -25,6 +29,12 @@ class Cell:
     def toggle(self):
         self.is_alive = not self.is_alive
 
+    def getColor():
+        if self.isAlive():
+            return self.color_alive
+        else:
+            return self.color_dead
+
     def update(self):
         if self.is_alive_next_gen:
             self.is_alive = True
@@ -32,117 +42,98 @@ class Cell:
             self.is_alive = False
         self.is_alive_next_gen = False
 
+
+"""
+Contains Cells and Game Logic
+"""
+class Grid:
+    rows    = int
+    columns = int
+    cells   = []
+
+    """
+    Initialise 32 x 32 grid
+    """
+    def __init__(self):
+        for colIndex in range(32):
+            for rowIndex in range(32):
+                self.cells.append(Cell(rowIndex, colIndex))
+
+    def getCell(self, x, y):
+        if 0 <= x <= 31 and 0 <= y <= 31:
+            return self.cells[y * 32 + x]
+
+    def draw(self):
+        for cell in self.cells:
+            x = cell.pos[0] * 32 # we 2px padding between cells
+            y = cell.pos[1] * 32
+            pygame.draw.rect(SCREEN, cell.getColor(), (x, y, 30, 30))
+
+    def updateCellsForNextGen(self):
+        # process flag and update the cells
+        for cell in self.cells:
+            cell.update()
+
+    """
+    Implement the Rules of Conway's Game of Life
+    """
+    def prepareCellsForNextGen(self):
+        for cell in self.cells:
+            c = self.countLivingNeighbors(cell)
+            if cell.isAlive():
+                # cell will die of loneliness
+                if c < 2 or c > 3:
+                    cell.is_alive_next_gen = False
+
+                # cell will survive this generation
+                else:
+                    cell.is_alive_next_gen = True
+            else:
+                # cell will be resurrected
+                if c == 3:
+                    cell.is_alive_next_gen = True
+
+                else:
+                    cell.is_alive_next_gen = False
+
+
+    def countLivingNeighbors(self, cell):
+        x = cell.pos[0]
+        y = cell.pos[1]
+
+        neighborPositions = [
+            (x,     y - 1),    # top
+            (x - 1, y    ),    # left
+            (x + 1, y    ),    # right
+            (x,     y + 1),    # bottom
+            (x - 1, y - 1),    # top left
+            (x + 1, y - 1),    # top right
+            (x - 1, y + 1),    # bottom left
+            (x + 1, y + 1),    # bottom right
+        ]
+
+        count = 0
+        for pos in neighborPositions:
+            neighbor = self.getCell(pos[0], pos[1])
+            if neighbor.__class__.__name__ != 'Cell':
+                pass
+            elif neighbor.isAlive():
+                count += 1
+
+        return count
+
+    def click(self, pos):
+        x = pos[0] // 32
+        y = pos[1] // 32
+        cell = grid.getCell(x, y)
+        if cell:
+            cell.toggle()
+
 class State:
+    run = bool
     def __init__(self):
         self.run = False
 
-"""
-Draws a square on the screen using the global SCREEN object
-"""
-def drawCell(cell):
-    xPos = cell.pos[0] * 32
-    yPos = cell.pos[1] * 32
-    color = COLOR_ALIVE if cell.is_alive else COLOR_DEAD
-    pygame.draw.rect(SCREEN, color, (xPos, yPos, 30, 30))
-
-
-"""
-Grid is 32 x 32 cells
-"""
-def initCells(container):
-    for colIndex in range(32):
-        for rowIndex in range(32):
-            container.append(Cell(rowIndex, colIndex))
-
-"""
-Update all the cells for the next generation
-"""
-def updateCells():
-    # pass all cells and set flag for next generation
-    for cell in cells:
-        if willBeAlive(cell, cells):
-            cell.is_alive_next_gen = True
-        else:
-            cell.is_alive_next_gen = False
-    # process flag and update the cells
-    for cell in cells:
-        cell.update()
-
-"""
-Return number of living neighbors for given cell and cell container
-"""
-def countLivingNeighbors(cell, container):
-    x = cell.pos[0]
-    y = cell.pos[1]
-    neighborsPositions = [
-        (x,     y - 1),    # top
-        (x - 1, y    ),    # left
-        (x + 1, y    ),    # right
-        (x,     y + 1),    # bottom
-        (x - 1, y - 1),    # top left
-        (x + 1, y - 1),    # top right
-        (x - 1, y + 1),    # bottom left
-        (x + 1, y + 1),    # bottom right
-    ]
-
-    neighbors_list = []
-    for pos in neighborsPositions:
-        neighbor = getCellAtIndex(pos)
-        if neighbor.__class__.__name__ != 'Cell':
-            pass
-        else:
-            neighbors_list.append(neighbor)
-
-    count = 0
-    for cell in neighbors_list:
-        if cell.isAlive():
-            count = count + 1
-        else:
-            pass
-    return count
-
-"""
-Returns (bool) weather the cell will be alive in the next generation
-"""
-def willBeAlive(cell, container):
-    c = countLivingNeighbors(cell, container)
-    if cell.isAlive():
-        # cell will die of loneliness
-        if c < 2 or c > 3:
-            return False
-        else:
-            return True
-    else:
-        # cell will be resurrected
-        if c == 3:
-            return True
-        else:
-            return False
-
-"""
-Returns cell array index based on the cell position on the grid.
-If the index exeeds the bounds of the grid, return negative value
-"""
-def getCellsIndex(pos):
-    if 0 <= pos[0] <= 31 and 0 <= pos[1] <= 31:
-        return pos[1] * 32 + pos[0]
-    else:
-        return -1
-"""
-Return cell reference from cells global by passing the grid position
-"""
-def getCellAtIndex(pos):
-    idx = getCellsIndex(pos)
-    if idx < 0:
-        return
-    else:
-        return cells[idx]
-
-def getCellFromMousePosition(pos):
-    cellPos = (pos[0] // 32, pos[1] // 32)
-    cell = getCellAtIndex(cellPos)
-    if cell:
-        return cell
 
 """
 User Input
@@ -155,9 +146,7 @@ def handleInput():
             if event.key == 32:
                 state.run = not state.run
         if event.type == pygame.MOUSEBUTTONUP:
-            getCellFromMousePosition(event.pos).toggle()
-
-
+            grid.click(event.pos)
 
 import sys, pygame
 pygame.init()
@@ -165,20 +154,14 @@ pygame.init()
 """
 Globals
 """
-SIZE = WIDTH, HEIGHT = 1024, 1024
+SIZE   = WIDTH, HEIGHT = 1024, 1024
 SCREEN = pygame.display.set_mode(SIZE)
-CLOCK = pygame.time.Clock()
-
-cells = []
-
-state = State()
+CLOCK  = pygame.time.Clock()
 
 COLOR_BLACK = (0, 0, 0)
-COLOR_ALIVE = (0, 120, 0)
-COLOR_DEAD  = (60, 60, 60)
 
-# init cell grid (32 x 32 cells)
-initCells(cells)
+state = State()
+grid  = Grid()
 
 COUNTER = 0
 
@@ -197,12 +180,12 @@ while True:
     SCREEN.fill(COLOR_BLACK)
 
     # Draw all the cells
-    for cell in cells:
-        drawCell(cell)
+    grid.draw()
 
-    # Update cells for next generation
+    # Update cells for next generation every 60 frames
     if state.run and COUNTER == 0:
-        updateCells()
+        grid.prepareCellsForNextGen()
+        grid.updateCellsForNextGen()
 
     # Update the visible display
     pygame.display.flip()
