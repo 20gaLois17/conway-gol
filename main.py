@@ -29,7 +29,7 @@ class Cell:
     def toggle(self):
         self.is_alive = not self.is_alive
 
-    def getColor():
+    def getColor(self):
         if self.isAlive():
             return self.color_alive
         else:
@@ -47,27 +47,37 @@ class Cell:
 Contains Cells and Game Logic
 """
 class Grid:
-    rows    = int
-    columns = int
-    cells   = []
+    rows        = int 
+    columns     = int 
+    cellPadding = int 
+    cells       = []
 
     """
     Initialise 32 x 32 grid
     """
-    def __init__(self):
-        for colIndex in range(32):
-            for rowIndex in range(32):
+    def __init__(self, columns, rows, cellPadding):
+        self.rows = rows
+        self.columns = columns
+        self.cellPadding = cellPadding 
+        for colIndex in range(self.columns):
+            for rowIndex in range(self.rows):
                 self.cells.append(Cell(rowIndex, colIndex))
 
     def getCell(self, x, y):
-        if 0 <= x <= 31 and 0 <= y <= 31:
-            return self.cells[y * 32 + x]
+        print(x, y)
+        if 0 <= x < self.columns and 0 <= y < self.rows:
+            return self.cells[y * self.rows + x]
 
+    # TODO: Clean this up
     def draw(self):
         for cell in self.cells:
-            x = cell.pos[0] * 32 # we 2px padding between cells
-            y = cell.pos[1] * 32
-            pygame.draw.rect(SCREEN, cell.getColor(), (x, y, 30, 30))
+            cellWidth = WIDTH / self.columns
+            cellHeight = HEIGHT / self.rows
+            cellBoxWidth = cellWidth - self.cellPadding
+            cellBoxHeight = cellHeight - self.cellPadding
+            x = cell.pos[0] * cellWidth
+            y = cell.pos[1] * cellHeight
+            pygame.draw.rect(SCREEN, cell.getColor(), (x, y, cellBoxWidth, cellBoxHeight))
 
     def updateCellsForNextGen(self):
         # process flag and update the cells
@@ -123,11 +133,15 @@ class Grid:
         return count
 
     def click(self, pos):
-        x = pos[0] // 32
-        y = pos[1] // 32
+        x = pos[0] // (WIDTH // self.rows)
+        y = pos[1] // (HEIGHT // self.columns)
+        print(x)
+        print(y)
         cell = grid.getCell(x, y)
         if cell:
             cell.toggle()
+        else:
+            print("no cell found")
 
 class State:
     run = bool
@@ -146,6 +160,7 @@ def handleInput():
             if event.key == 32:
                 state.run = not state.run
         if event.type == pygame.MOUSEBUTTONUP:
+            print(event)
             grid.click(event.pos)
 
 import sys, pygame
@@ -161,7 +176,7 @@ CLOCK  = pygame.time.Clock()
 COLOR_BLACK = (0, 0, 0)
 
 state = State()
-grid  = Grid()
+grid  = Grid(8, 16, 2)
 
 COUNTER = 0
 
@@ -183,6 +198,7 @@ while True:
     grid.draw()
 
     # Update cells for next generation every 60 frames
+    
     if state.run and COUNTER == 0:
         grid.prepareCellsForNextGen()
         grid.updateCellsForNextGen()
