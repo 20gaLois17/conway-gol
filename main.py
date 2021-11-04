@@ -21,10 +21,10 @@ class Cell:
         self.is_alive_next_gen = False
 
     def __str__(self):
-        return "cell at (" + str(self.pos[0]) + "," + str(self.pos[1]) + ")"
+        return f"cell at ({str(self.pos[0])}, {str(self.pos[1])})"
 
     def isAlive(self):
-        return True if self.is_alive else False
+        return self.is_alive
 
     def toggle(self):
         self.is_alive = not self.is_alive
@@ -42,7 +42,6 @@ class Cell:
             self.is_alive = False
         self.is_alive_next_gen = False
 
-
 """
 Contains Cells and Game Logic
 """
@@ -50,22 +49,23 @@ class Grid:
     rows          = int
     columns       = int
     cellPadding   = int
-    cellBoxWidth  = int
-    cellBoxHeight = int
+    cellBoxWidth  = float
+    cellBoxHeight = float
     cells         = []
 
     """
     Initialise (columns x rows) grid
     """
     def __init__(self, columns, rows, cellPadding):
-        if not (1 <= columns < 512 and 1 <= rows < 512):
+        # set sensible boundaries
+        if not (4 <= columns < 128 and 4 <= rows < 128):
             return
 
         self.cells         = []
         self.columns       = columns
         self.rows          = rows
         self.cellPadding   = cellPadding
-        self.cellBoxWidth  = HEIGHT / self.rows
+        self.cellBoxWidth  = HEIGHT / self.columns
         self.cellBoxHeight = HEIGHT / self.rows
 
         # initialise cells
@@ -78,7 +78,6 @@ class Grid:
         if 0 <= x < self.columns and 0 <= y < self.rows:
             return self.cells[y * self.columns + x]
 
-    # TODO: Clean this up
     def draw(self):
         for cell in self.cells:
             cellWidth = self.cellBoxWidth - self.cellPadding
@@ -150,9 +149,30 @@ class Grid:
             print("no cell found")
 
 class State:
-    run = bool
-    def __init__(self):
+    run   = bool
+    frame = int
+    grid  = None
+
+    def __init__(self, grid):
+        self.stop()
+        self.frame = 0
+        self.grid = grid
+
+    def nextFrame(self):
+        if not self.run: return
+
+        self.frame = (self.frame + 1) % 60
+        if self.frame == 0:
+            self.grid.prepareCellsForNextGen()
+            self.grid.updateCellsForNextGen()
+
+    def go(self):
+        self.run = True
+        pygame.display.set_caption("Game of Life")
+
+    def stop(self):
         self.run = False
+        pygame.display.set_caption("Game of Life -- PAUSED --")
 
 
 """
@@ -163,56 +183,57 @@ def handleInput():
         if event.type == pygame.QUIT:
             sys.exit()
         if event.type == pygame.KEYUP:
+            # toggle stop / go
             if event.key == 32:
-                state.run = not state.run
+                if state.run:
+                    state.stop()
+                else:
+                    state.go()
+
+            # double number of cells on the grid
             if event.key == 45:
+                state.stop()
                 grid.__init__(grid.columns * 2 , grid.rows * 2, 1)
+
+            # half number of cells on the grid
             if event.key == 61:
+                state.stop()
                 grid.__init__(grid.columns // 2, grid.rows // 2, 1)
 
 
+        # TODO: Draw figure with mouse instead of clicking every cell
         if event.type == pygame.MOUSEBUTTONUP:
             grid.click(event.pos)
 
 import sys, pygame
 pygame.init()
 
-"""
-Globals
-"""
+
+# Globals
 SIZE   = WIDTH, HEIGHT = 1024, 1024
 SCREEN = pygame.display.set_mode(SIZE)
 CLOCK  = pygame.time.Clock()
 
-COLOR_BLACK = (0, 0, 0)
-
-state = State()
-grid  = Grid(32, 32, 1)
-
-COUNTER = 0
+# Init
+grid  = Grid(16, 16, 1)
+state = State(grid)
 
 # Game Loop
 while True:
     # User Input
     handleInput()
 
-    # Update Counter
-    COUNTER = (COUNTER + 1) % 60
-
     # FPS
     CLOCK.tick(60)
 
     # Erase the screen
-    SCREEN.fill(COLOR_BLACK)
+    SCREEN.fill((0, 0, 0))
 
     # Draw all the cells
     grid.draw()
 
     # Update cells for next generation every 60 frames
-    if state.run and COUNTER == 0:
-        grid.prepareCellsForNextGen()
-        grid.updateCellsForNextGen()
+    state.nextFrame()
 
     # Update the visible display
     pygame.display.flip()
-
