@@ -26,8 +26,8 @@ class Cell:
     def isAlive(self):
         return self.is_alive
 
-    def toggle(self):
-        self.is_alive = not self.is_alive
+    def setAlive(self, a):
+        self.is_alive = a
 
     def getColor(self):
         if self.isAlive():
@@ -59,6 +59,7 @@ class Grid:
     def __init__(self, columns, rows, cellPadding):
         # set sensible boundaries
         if not (4 <= columns < 128 and 4 <= rows < 128):
+            print("exceeding sensible grid dimensions")
             return
 
         self.cells         = []
@@ -144,7 +145,7 @@ class Grid:
         y = int(pos[1] // (HEIGHT / self.rows))
         cell = grid.getCell(x, y)
         if cell:
-            cell.toggle()
+            cell.setAlive(not cell.is_alive)
         else:
             print("no cell found")
 
