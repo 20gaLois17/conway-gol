@@ -164,7 +164,7 @@ class Grid:
         """
         x = int(pos[0] // (WIDTH / self.columns))
         y = int(pos[1] // (HEIGHT / self.rows))
-        cell = grid.getCell(x, y)
+        cell = self.getCell(x, y)
         if cell:
             cell.setAlive(not cell.is_alive)
         else:
